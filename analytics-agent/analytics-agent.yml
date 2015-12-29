@@ -1,0 +1,193 @@
+description: "AppDynamics Analytics Agent"
+name: ${ad.process.name}
+# The version of this configuration file. This should not be changed by the user.
+version: 1
+
+server:
+    applicationConnectors:
+      - type: http
+        port: ${ad.dw.http.port}
+        bindHost: ${ad.dw.http.host}
+
+    adminConnectors:
+      - type: http
+        port: ${ad.dw.http.adminPort}
+        bindHost: ${ad.dw.http.adminHost}
+        acceptorThreads: 1
+        selectorThreads: 2
+
+    requestLog:
+        appenders:
+          - type: file
+            threshold: ${ad.dw.http.log.level}
+            currentLogFilename: ${ad.dw.log.path}/${ad.process.name}-http.log
+            archivedLogFilenamePattern: ${ad.dw.log.path}/${ad.process.name}-http-%d.log.gz
+            archivedFileCount: 5
+
+logging:
+    level: INFO
+
+    loggers:
+        # These are special as they print useful start/stop messages.
+        com.appdynamics.common.framework.util.SimpleApp: INFO
+        io.dropwizard.server.ServerFactory: WARN
+        io.dropwizard: INFO
+        org.eclipse.jetty.server.ServerConnector: INFO
+        # The rest of our loggers.
+        com.appdynamics: ${ad.dw.log.level}
+
+    appenders:
+      - type: console
+        threshold: ${ad.dw.console.log.level}
+        logFormat: "[%date{\"yyyy-MM-dd'T'HH:mm:ss,SSSXXX\", ${user.timezone}}]  [%-5level]  [%thread]  [%logger{36}]  %msg%n"
+
+      - type: file
+        logFormat: "[%date{\"yyyy-MM-dd'T'HH:mm:ss,SSSXXX\", ${user.timezone}}]  [%-5level]  [%thread]  [%logger{36}]  %msg%n"
+        currentLogFilename: ${ad.dw.log.path}/${ad.process.name}.log
+        archivedLogFilenamePattern: ${ad.dw.log.path}/${ad.process.name}-%d.log.gz
+        archivedFileCount: 5
+
+modules:
+      - className: com.appdynamics.common.util.health.HealthReporterModule
+        properties:
+          healthyLogLevel: INFO
+          schedule:
+            time: 3
+            timeUnit: minutes
+
+      - className: com.appdynamics.analytics.agent.pipeline.xform.text.Multiline2CharsStageFactory
+        uri: multiline
+
+      - className: com.appdynamics.analytics.agent.pipeline.xform.map.MapStageFactory
+        uri: xform:map
+        properties:
+            fieldName: message
+
+      - className: com.appdynamics.analytics.agent.pipeline.xform.field.FieldAdditionStageFactory
+        uri: xform:field:add
+        properties:
+            fields:
+                host: ${system.host.name}
+
+      - className: com.appdynamics.analytics.agent.pipeline.xform.field.ScriptedFieldStageFactory
+        uri: xform:field:add:script
+        properties:
+            fields:
+                pickupTimestamp: ${calendar.now.utc}
+
+      - className: com.appdynamics.analytics.agent.pipeline.xform.grok.GrokStageFactory
+        uri: xform:grok
+        properties:
+            path: ${conf.dir}/grok
+            nameGlob: '**{.grok}'
+            source: message
+
+      - className: com.appdynamics.analytics.agent.pipeline.xform.time.DateTimeExtractorStageFactory
+        uri: xform:datetime
+        properties:
+            source: message
+            destination: eventTimestamp
+
+      - className: com.appdynamics.analytics.agent.pipeline.xform.json.MapsToJsonStageFactory
+        uri: xform:json:map2Json
+
+      - className: com.appdynamics.analytics.pipeline.http.HttpSecurityModule
+
+      - className: com.appdynamics.analytics.pipeline.mem.TapStageFactory
+        uri: tap
+
+      - className: com.appdynamics.analytics.agent.pipeline.dynamic.LogSourceJobFileModule
+        uri: file:poll:pipeline
+        properties:
+          poll:
+              time: 5
+              timeUnit: seconds
+          paths:
+              - path: ${conf.dir}/job
+                nameGlob: '**{.yml,.job}'
+
+      - className: com.appdynamics.analytics.queue.QueuesModule
+        uri: queues
+        properties:
+          queues:
+            - queueName: ${eventType.bt}
+              queueSize: 128
+              messageSource: true
+            - queueName: ${eventType.log}
+              queueSize: 128
+              messageSource: true
+
+      - className: com.appdynamics.analytics.pipeline.source.MessageSourceStageFactory
+        uri: message:poll
+
+      - className: com.appdynamics.analytics.pipeline.http.Utf8StringPostReceiver
+        uri: http:receive:bt
+        properties:
+          urlPattern: '/v1/sinks/bt/*'
+          queueName: ${eventType.bt}
+          queueSize: 128
+
+      - className: com.appdynamics.analytics.agent.field.ExtractedFieldsPollerModule
+        properties:
+          pollInterval:
+            time: ${extractedFields.poll.intervalSeconds}
+            timeUnit: seconds
+          eventType: ${eventType.log}
+
+      - className: com.appdynamics.analytics.agent.pipeline.event.EventServiceClientModule
+        properties:
+          endpoint: ${http.event.endpoint}
+          accountName: ${http.event.accountName}
+          accessKey: ${http.event.accessKey}
+          proxyHost: ${http.event.proxyHost}
+          proxyPort: ${http.event.proxyPort}
+          proxyUsername: ${http.event.proxyUsername}
+          proxyPassword: ${http.event.proxyPassword}
+
+      - className: com.appdynamics.analytics.agent.source.LogSourcesModule
+        properties:
+          watermarkPath: ${conf.dir}/watermark
+          jobPaths:
+              - path: ${conf.dir}/job
+                nameGlob: '**{.yml,.job}'
+
+      - className: com.appdynamics.analytics.agent.pipeline.event.EventServicePublishStageFactory
+        uri: http:eventType:publish:log
+        properties:
+          eventBatchingEnabled: true
+
+      - className: com.appdynamics.analytics.agent.pipeline.event.EventServicePublishStageFactory
+        uri: http:eventType:publish:bt
+        properties:
+          upsert: true
+          idPath: requestGUID
+          mergeFields: [ "segments" ]
+
+      - className: com.appdynamics.analytics.pipeline.framework.PipelinesModule
+        uri: pipelines
+        properties:
+          pipelines:
+              ### Start core pipelines ###
+              - id: log-publish
+                instances: ${pipeline.publish.log.instances}
+                stages:
+                  - uri: message:poll
+                    properties:
+                        messageSourceId: ${eventType.log}
+                        maxMessagesPerPoll: 24
+                        retry:
+                            totalAttempts: ${http.event.error.retryAttempts}
+                            retryPauseMillis: ${http.event.error.pauseMillis}
+                  - uri: http:eventType:publish:log
+
+              - id: bt-publish
+                instances: ${pipeline.publish.bt.instances}
+                stages:
+                  - uri: message:poll
+                    properties:
+                        messageSourceId: ${eventType.bt}
+                        retry:
+                            totalAttempts: ${http.event.error.retryAttempts}
+                            retryPauseMillis: ${http.event.error.pauseMillis}
+                  - uri: http:eventType:publish:bt
+              ### End core pipelines ###

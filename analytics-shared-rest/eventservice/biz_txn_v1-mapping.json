@@ -1,0 +1,82 @@
+{
+    "properties": {
+        "segments": {
+            "type": "nested",
+            "properties": {
+                "httpData": {
+                    "properties": {
+                        "cookies": { "type": "object" },
+                        "headers": { "type": "object" },
+                        "parameters": { "type": "object" },
+                        "principal": { "type": "string", "index": "not_analyzed" },
+                        "sessionId": { "type": "string", "index": "not_analyzed" },
+                        "sessionObjects": { "type": "object" },
+                        "url": { "type": "string", "index": "not_analyzed" },
+                        "uriPathSegments": { "type": "object" }
+                    }
+                },
+                "tier": { "type": "string", "index": "not_analyzed" },
+                "tierId": { "type": "string", "index": "not_analyzed" },
+                "node": { "type": "string", "index": "not_analyzed" },
+                "nodeId": { "type": "string", "index": "not_analyzed" },
+                "requestExperience": { "type": "string", "index": "not_analyzed" },
+                "entryPoint": { "type": "boolean" },
+                "uniqueSegmentId": { "type": "long" },
+                "clientRequestGUID": { "type": "string", "index": "not_analyzed" },
+                "transactionTime": { "type": "long" },
+                "errors": { "type": "string", "index": "analyzed", "norms": { "enabled": "false" } },
+                "userData": { "type": "object" },
+                "exitCalls": {
+                    "type": "nested",
+                    "properties": {
+                        "exitCallType": { "type": "string", "index": "not_analyzed" },
+                        "customExitCallDefinitionId": { "type": "string", "index": "not_analyzed" },
+                        "isCustomExitCall": { "type": "boolean" },
+                        "avgResponseTimeMillis": { "type": "double" },
+                        "numberOfErrors": { "type": "integer" },
+                        "numberOfCalls": { "type": "integer" },
+                        "isSynchronous": { "type": "boolean" },
+                        "toEntity": {
+                            "properties": {
+                                "entityId": { "type": "string", "index": "not_analyzed" },
+                                "entityType": { "type": "string", "index": "not_analyzed" }
+                            }
+                        }
+                     }
+                 }
+            }
+        },
+        "application": { "type": "string", "index": "not_analyzed" },
+        "applicationId": { "type": "string", "index": "not_analyzed" },
+        "requestGUID": { "type": "string", "index": "not_analyzed" },
+        "transactionName": { "type": "string", "index": "not_analyzed" },
+        "transactionId": { "type": "long" },
+        "_appliedUpdates": { "type": "string", "index": "not_analyzed" }
+    },
+    "dynamic_templates": [
+        {
+            "string_fields": {
+                "mapping": {
+                    "type" : "string",
+                    "index" : "not_analyzed",
+                    "doc_values": true
+                },
+                "match" : "*",
+                "match_mapping_type": "string"
+            }
+        },{
+            "default_fields": {
+                "mapping": {
+                    "type" : "{dynamic_type}",
+                    "doc_values": true
+                },
+                "match" : "*",
+                "match_mapping_type": "*"
+            }
+        }
+    ],
+    "metaData": {
+        "dynamic": true,
+        "lookBackTimePeriodSeconds": 86400
+    }
+}

@@ -1,0 +1,61 @@
+id: ${pipeline.id}
+enabled: {{#enabled}}{{.}}{{/enabled}}
+
+stages:
+  - uri: file:tail
+    properties:
+        path: '{{#file.path}}{{.}}{{/file.path}}'
+        nameGlob: '{{#file.nameGlob}}{{.}}{{/file.nameGlob}}'
+        startAtEnd: '{{#startAtEnd}}{{.}}{{/startAtEnd}}'
+
+  {{#multiline}}
+  - uri: multiline
+    properties:
+        {{name}}: '{{value}}'
+        matchAction: 'new'
+  {{/multiline}}
+  - uri: xform:map
+  - uri: xform:field:add
+    properties:
+        source: '{{#file.path}}{{{.}}}{{/file.path}}'
+        {{#fields.size}}
+        {{#fields}}
+        {{name}}: '{{{value}}}'
+        {{/fields}}
+        {{/fields.size}}
+  - uri: xform:field:add:script
+  {{#grok}}
+  - uri: xform:grok
+    properties:
+        {{#source}}
+        source: '{{{.}}}'
+        {{/source}}
+        {{#pattern}}
+        pattern: '{{{.}}}'
+        {{/pattern}}
+        {{#patterns.size}}
+        patterns:
+          {{#patterns}}
+          - '{{{.}}}'
+          {{/patterns}}
+        {{/patterns.size}}
+  {{/grok}}
+  - uri: xform:datetime
+    {{#eventTimestamp}}
+    properties:
+          {{#source}}
+          source: "{{{.}}}"
+          {{/source}}
+          {{#pattern}}
+          pattern: "{{{.}}}"
+          {{/pattern}}
+          {{#destination}}
+          destination: "{{{.}}}"
+          {{/destination}}
+    {{/eventTimestamp}}
+  - uri: xform:json:map2Json
+    properties:
+        clearMaps: true
+  - uri: tap
+    properties:
+        queueName: ${eventType.log}

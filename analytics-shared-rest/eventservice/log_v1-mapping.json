@@ -1,0 +1,37 @@
+{
+    "properties": {
+        "pickupTimestamp": { "type": "date", "format": "date_time" },
+        "message": { "type": "string", "index": "analyzed", "norms": { "enabled": "false" } },
+        "host": { "type": "string", "index": "not_analyzed" },
+        "source": { "type": "string", "index": "not_analyzed" },
+        "sourceType": { "type": "string", "index": "not_analyzed" },
+        "nodeName": { "type": "string", "index": "not_analyzed" },
+        "tierName": { "type": "string", "index": "not_analyzed" },
+        "appName": { "type": "string", "index": "not_analyzed" }
+    },
+    "dynamic_templates": [
+        {
+            "string_fields": {
+                "mapping": {
+                    "type" : "string",
+                    "index" : "not_analyzed",
+                    "doc_values": true
+                },
+                "match" : "*",
+                "match_mapping_type": "string"
+            }
+        },{
+            "default_fields": {
+                "mapping": {
+                    "type" : "{dynamic_type}",
+                    "doc_values": true
+                },
+                "match" : "*",
+                "match_mapping_type": "*"
+            }
+        }
+    ],
+    "metaData": {
+        "dynamic": true
+    }
+}
