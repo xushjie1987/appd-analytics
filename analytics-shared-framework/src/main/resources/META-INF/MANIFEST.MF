@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Implementation-Vendor: AppDynamics Inc
+Implementation-Version: buildName=20-4.1.7.next-controller, buildHash=
+ d344e7224fea61b40ad9781517bfe3816cc09957, buildTimestamp=2015-12-01T1
+ 9:56:49+0000, buildNumber=11813, jobName=build-analytics, version=4.1
+ .7.2
+
