@@ -30,11 +30,30 @@
 		<commons.codec.version>1.10</commons.codec.version>
 		<commons.io.version>2.4</commons.io.version>
 		<mustache.version>0.6.3</mustache.version>
+		<elasticsearch.version>2.2.0</elasticsearch.version>
+		<http.version>4.4</http.version>
 	</properties>
 
 	<!-- 依赖 -->
 	<dependencyManagement>
 		<dependencies>
+			<!-- http -->
+			<dependency>
+				<groupId>org.apache.httpcomponents</groupId>
+				<artifactId>httpclient</artifactId>
+				<version>${http.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.httpcomponents</groupId>
+				<artifactId>httpcore</artifactId>
+				<version>${http.version}</version>
+			</dependency>
+			<!-- elasticsearch -->
+			<dependency>
+				<groupId>org.elasticsearch</groupId>
+				<artifactId>elasticsearch</artifactId>
+				<version>${elasticsearch.version}</version>
+			</dependency>
 			<!-- mustache -->
 			<dependency>
 				<groupId>com.github.spullara.mustache.java</groupId>
