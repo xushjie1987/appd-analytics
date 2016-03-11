@@ -22,11 +22,67 @@
 		<janino.version>2.7.8</janino.version>
 		<guava.version>19.0</guava.version>
 		<elasticsearch.version>2.2.0</elasticsearch.version>
+		<dropwizard.version>0.9.2</dropwizard.version>
+		<jsr.version>1.0</jsr.version>
+		<guice.version>4.0</guice.version>
+		<validation.version>1.1.0.Final</validation.version>
+		<lombok.version>1.16.8</lombok.version>
+		<commons.codec.version>1.10</commons.codec.version>
+		<commons.io.version>2.4</commons.io.version>
+		<mustache.version>0.6.3</mustache.version>
 	</properties>
 
 	<!-- 依赖 -->
 	<dependencyManagement>
 		<dependencies>
+			<!-- mustache -->
+			<dependency>
+				<groupId>com.github.spullara.mustache.java</groupId>
+				<artifactId>core</artifactId>
+				<version>${mustache.version}</version>
+			</dependency>
+			<!-- io -->
+			<dependency>
+				<groupId>commons-io</groupId>
+				<artifactId>commons-io</artifactId>
+				<version>${commons.io.version}</version>
+			</dependency>
+			<!-- lombok -->
+			<dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok</artifactId>
+				<version>${lombok.version}</version>
+			</dependency>
+			<!-- codec -->
+			<dependency>
+				<groupId>commons-codec</groupId>
+				<artifactId>commons-codec</artifactId>
+				<version>${commons.codec.version}</version>
+			</dependency>
+			<!-- validation -->
+			<dependency>
+				<groupId>javax.validation</groupId>
+				<artifactId>validation-api</artifactId>
+				<version>${validation.version}</version>
+			</dependency>
+			<!-- guice -->
+			<dependency>
+				<groupId>com.google.inject</groupId>
+				<artifactId>guice</artifactId>
+				<version>${guice.version}</version>
+			</dependency>
+			<!-- jsr -->
+			<dependency>
+				<groupId>javax.annotation</groupId>
+				<artifactId>jsr250-api</artifactId>
+				<version>${jsr.version}</version>
+			</dependency>
+			<!-- dropwizard -->
+			<dependency>
+				<groupId>io.dropwizard</groupId>
+				<artifactId>dropwizard-core</artifactId>
+				<version>${dropwizard.version}</version>
+			</dependency>
 			<!-- logback -->
 			<dependency>
 				<groupId>org.slf4j</groupId>
